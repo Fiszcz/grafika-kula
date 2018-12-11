@@ -3,11 +3,11 @@ var canvasWidth = canvas.width;
 var canvasHeight = canvas.height;
 var ctx = canvas.getContext("2d");
 var canvasData = ctx.getImageData(0, 0, canvasWidth, canvasHeight);
-
+var MODE = 2;
+let obiekty = [[],[],[],[]];
 // That's how you define the value of a pixel //
 function drawPixel(x, y, r, g, b, a) {
     var index = (x + y * canvasWidth) * 4;
-
     canvasData.data[index + 0] = r;
     canvasData.data[index + 1] = g;
     canvasData.data[index + 2] = b;
@@ -21,9 +21,6 @@ function updateCanvas() {
 }
 
 //rysowana kula i dane do nich
-
-let obiekty = [[], [], [], []];
-
 let ip = 1.0;
 let ia = 0.1;
 
@@ -45,7 +42,6 @@ let yL = 500;
 let zL = -1600;
 
 const odlegloscOdRzutni = 150;
-
 // //Dkazdy obiekt wypelniam poczatkowymi danymi
 // for (let n = 0; n < 4; n++)
 //     //jeden obiekt to obraz 300 na 300
@@ -60,26 +56,43 @@ const sprawdzPunktCzyWPolsfera = (x, y) => {
     let a = 1,
         b = -2 * odlegloscOdRzutni,
         c = Math.pow(x, 2) + Math.pow(y, 2) + Math.pow(odlegloscOdRzutni, 2) - Math.pow(150, 2);
-
     let delta = Math.pow(b, 2) - 4 * a * c;
-
     return delta >= 0;
 }
 
-for (let x = 0; x < 300; x++) {
-    obiekty[0].push([]);
-    for (let y = 0; y < 300; y++) {
-        if (sprawdzPunktCzyWPolsfera(x - 300 / 2, y - 300 / 2)) {
-            let a = 1;
-            let b = -2 * odlegloscOdRzutni;
-            let c = Math.pow((x - 300 / 2), 2) + Math.pow((y - 300 / 2), 2) + Math.pow(odlegloscOdRzutni, 2) - Math.pow(150, 2);
-            let delta = Math.pow(b, 2) - 4 * a * c;
+function resetconfig() {
+    obiekty = [[],[],[],[]];
+    if (MODE === 1) {
+        for (let x = 0; x < 300; x++) {
+            obiekty[0].push([]);
+            for (let y = 0; y < 300; y++) {
+                if (sprawdzPunktCzyWPolsfera(x - 300 / 2, y - 300 / 2)) {
+                    let a = 1;
+                    let b = -2 * odlegloscOdRzutni;
+                    let c = Math.pow((x - 300 / 2), 2) + Math.pow((y - 300 / 2), 2) + Math.pow(odlegloscOdRzutni, 2) - Math.pow(150, 2);
+                    let delta = Math.pow(b, 2) - 4 * a * c;
 
-            obiekty[0][x].push({z: ((-b - Math.sqrt(delta)) / 2 * a), c1: 240, c2: 240, c3: 240});
-        } else
-            obiekty[0][x].push({z: 120, c1: 240, c2: 240, c3: 240});
+                    obiekty[0][x].push({
+                        z: ((-b - Math.sqrt(delta)) / 2 * a), c1: 240, c2: 240, c3: 240
+                    });
+                } else
+                    obiekty[0][x].push({
+                        z: 120, c1: 240, c2: 240, c3: 240
+                    });
+            }
+        }
+    } else if (MODE === 2) {
+        for (let x = 0; x < 300; x++) {
+            obiekty[0].push([]);
+            for (let y = 0; y < 300; y++) {
+                obiekty[0][x].push({
+                    z: (100), c1: 240, c2: 240, c3: 240
+                });
+            }
+        }
     }
 }
+resetconfig();
 
 let paintComponent = (obiekt, material = 0) => {
     writeValues();
@@ -88,23 +101,13 @@ let paintComponent = (obiekt, material = 0) => {
         for (let y = 0; y < 300; y++) {
 
             //liczymy fonga
-            let fong = ip * bphong([positionLX, positionLY, -obiekt[x][y].z],
-                [xL - x, yL - y, zL - obiekt[x][y].z],
-                normalny(x, y, obiekt[x][y].z),
-                [x, y, obiekt[x][y].z],
-                m[material],
-                ip,
-                kd[material],
-                ks[material]);
-
+            let fong = ip * bphong([positionLX, positionLY, -obiekt[x][y].z], [xL - x, yL - y, zL - obiekt[x][y].z],
+                normalny(x, y, obiekt[x][y].z), [x, y, obiekt[x][y].z], m[material], ip, kd[material], ks[material]);
             let a = ia * ka[material];
-
             //sprawdzamy czy funkcya fonga nie wykroczyla poza lub czy zostala prawidlowo wygenerowana
             if (isNaN(fong))
                 fong = 0;
-
             let res = fong + a;
-
             //dla wartosci fonga zwracamy wartosci koloru yaki ma być narysowany
             //zwracana to tablica trzech wartosci [number, number, number]
             colors = getColor(res);
@@ -123,7 +126,6 @@ const getColor = (p) => {
         v = 0;
     else if (v > 255)
         v = 255;
-
     return [v, v, v];
 };
 
@@ -162,7 +164,6 @@ const obliczH = (naKtorym, zKtorym) => {
     let k = dlugosc(zKtorym) / dlugosc(naKtorym);
     let temp = [naKtorym[0] * k, naKtorym[1] * k, naKtorym[2] * k];
     let x = [zKtorym[0] - temp[0], zKtorym[1] - temp[1], zKtorym[2] - temp[2]];
-
     return [temp[0] + x[0] / 2, temp[1] + x[1] / 2, temp[2] + x[2] / 2];
 }
 
@@ -179,7 +180,6 @@ const scalar = (naKtorym, zKtorym) => {
 }
 
 // start painting
-
 const changeXL = () => {
     let x = document.getElementById("xL").value;
     xL = x;
@@ -233,6 +233,17 @@ const writeValues = () => {
     document.getElementById("zLValue").innerText = zL;
     document.getElementById("ipValue").innerText = ip;
     document.getElementById("iaValue").innerText = ia;
+    document.getElementById("mode").innerText = MODE;
 };
+
+const changeMode = () => {
+    if (MODE === 1)
+        MODE = 2;
+    else if (MODE === 2)
+        MODE = 1;
+    document.getElementById("mode").innerText = MODE;
+    resetconfig();
+    paintComponent(obiekty[0]);
+}
 
 paintComponent(obiekty[0]);
